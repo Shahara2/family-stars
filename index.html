@@ -200,6 +200,14 @@
   .item-visual-sm { width:44px; height:44px; object-fit:cover; border-radius:8px; }
   .img-preview-thumb { width:60px; height:60px; object-fit:cover; border-radius:10px; border:2px solid var(--accent3); }
 
+  .sub-tab {
+    padding:8px 18px; border-radius:20px; cursor:pointer;
+    color:var(--muted); font-weight:600; font-size:0.9rem;
+    border:1px solid var(--border); transition:all 0.2s;
+  }
+  .sub-tab:hover { color:var(--text); border-color:var(--accent4); }
+  .sub-tab.active { background:rgba(247,201,72,0.15); color:var(--accent1); border-color:var(--accent1); }
+
 
 
   @media(max-width:600px) {
@@ -234,8 +242,8 @@
       <div style="color:var(--muted);font-size:0.9rem;margin-top:8px;">נהל כוכבים ופעולות</div>
     </div>
     <div class="role-card" onclick="showChildSelect()">
-      <div class="role-icon">👦</div>
-      <div class="role-name" style="color:var(--accent3)">ילד</div>
+      <div class="role-icon">🧒</div>
+      <div class="role-name" style="color:var(--accent3)">ילד/ה</div>
       <div style="color:var(--muted);font-size:0.9rem;margin-top:8px;">ראה את הכוכבים שלי</div>
     </div>
   </div>
@@ -279,9 +287,8 @@
   <div class="container">
     <div class="tabs">
       <div class="tab active" onclick="switchTab('overview')">📊 סקירה</div>
-      <div class="tab" onclick="switchTab('give')">⭐ תן כוכבים</div>
+      <div class="tab" onclick="switchTab('give')">⭐ כוכבים ופרסים</div>
       <div class="tab" onclick="switchTab('manage')">⚙️ ניהול</div>
-      <div class="tab" onclick="switchTab('rewards')">🎁 פרסים</div>
     </div>
 
     <!-- Overview -->
@@ -296,25 +303,29 @@
       <div class="children-grid" id="give-children-grid"></div>
 
       <div id="give-actions-section" style="display:none;">
-        <div class="section-title">✅ בחר פעולה לתגמול</div>
-        <div class="actions-grid" id="give-actions-grid"></div>
+        <!-- Sub tabs -->
+        <div style="display:flex;gap:10px;margin-bottom:24px;">
+          <div class="sub-tab active" id="subtab-stars" onclick="switchSubTab('stars')">⭐ כוכבים</div>
+          <div class="sub-tab" id="subtab-rewards" onclick="switchSubTab('rewards')">🎁 פרסים</div>
+        </div>
 
-        <!-- Remove stars -->
-        <div class="remove-panel">
-          <div class="section-title">🔻 הורד כוכבים (מימוש פרס)</div>
-          <div class="remove-row">
-            <input type="number" id="remove-amount" value="5" min="1" placeholder="כמות">
-            <input type="text" id="remove-reason" placeholder="סיבה (למשל: קיבל פרס 🎁)" value="מימוש פרס">
-            <button class="btn btn-danger" onclick="doRemoveStars()">🔻 הורד</button>
-          </div>
-          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,107,157,0.2);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-            <div style="color:var(--muted);font-size:0.9rem;">איפוס מלא של כל הכוכבים:</div>
-            <button class="btn btn-danger btn-sm" onclick="doResetStars()">🔄 אפס לאפס</button>
-          </div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,107,157,0.2);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-            <div style="color:var(--muted);font-size:0.9rem;">מחיקת היסטוריה:</div>
-            <button class="btn btn-danger btn-sm" onclick="doClearHistory()">🗑️ מחק היסטוריה</button>
-          </div>
+        <!-- Stars sub-tab -->
+        <div id="give-sub-stars">
+          <div class="section-title">✅ בחר פעולה לתגמול</div>
+          <div class="actions-grid" id="give-actions-grid"></div>
+        </div>
+
+        <!-- Rewards sub-tab -->
+        <div id="give-sub-rewards" style="display:none;">
+          <div class="section-title">🎁 בחר פרס למימוש</div>
+          <div class="actions-grid" id="give-rewards-grid"></div>
+        </div>
+
+        <!-- Reset -->
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="color:var(--muted);font-size:0.9rem;">איפוס מלא:</div>
+          <button class="btn btn-danger btn-sm" onclick="doResetStars()">🔄 אפס לאפס</button>
+          <button class="btn btn-danger btn-sm" onclick="doClearHistory()">🗑️ מחק היסטוריה</button>
         </div>
       </div>
     </div>
@@ -332,16 +343,14 @@
         <button class="btn btn-sm" onclick="openAddAction()">+ הוסף פעולה</button>
       </div>
       <div class="actions-grid" id="manage-actions"></div>
-    </div>
 
-    <!-- Rewards -->
-    <div class="tab-content" id="tab-rewards">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div class="section-title" style="margin:0;">🎁 פרסים למימוש</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;margin-top:32px;">
+        <div class="section-title" style="margin:0;">🎁 פרסים</div>
         <button class="btn btn-sm" onclick="openAddReward()">+ הוסף פרס</button>
       </div>
-      <div id="manage-rewards-list"></div>
+      <div class="actions-grid" id="manage-rewards-inline"></div>
     </div>
+
   </div>
 </div>
 
@@ -547,36 +556,42 @@ function enterChild(id) {
   const hist = appData.history.filter(h => String(h.child_id) === String(id));
   const el = document.getElementById('child-history');
   if(!hist.length) {
-    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;">עדיין אין כוכבים... קדימה לעבודה! 💪</div>';
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">עדיין אין כוכבים... קדימה לעבודה! 💪</div>';
   } else {
-    el.innerHTML = [...hist].reverse().slice(0,30).map(h => {
-      const plus = parseInt(h.stars) > 0;
-      const relatedAction = appData.actions.find(a=>String(a.id)===String(h.action_id));
-      const visual = h.type==='הפחתה' ? '<span style="font-size:1.5rem;">🔻</span>' :
-        relatedAction?.image ? `<img src="${relatedAction.image}" class="item-visual-sm">` :
-        `<span style="font-size:1.5rem;">${relatedAction?.emoji||'⭐'}</span>`;
-      return `
-        <div class="history-item">
-          ${visual}
-          <div class="history-info">
-            <div class="history-action">${h.action_name}</div>
-            <div class="history-time">${h.timestamp}</div>
-          </div>
-          <div class="history-stars ${plus?'stars-plus':'stars-minus'}">${plus?'+':''}${h.stars} ⭐</div>
-        </div>`;
-    }).join('');
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">` +
+      [...hist].reverse().slice(0,30).map(h => {
+        const plus = parseInt(h.stars) > 0;
+        const relatedAction = appData.actions.find(a=>String(a.id)===String(h.action_id));
+        const relatedReward = appData.rewards ? appData.rewards.find(r=>r.name===h.action_name) : null;
+        const visualItem = relatedReward || relatedAction;
+        const visual = visualItem ? renderVisual(visualItem,'sm') :
+          h.type==='הפחתה' ? '<span style="font-size:1.4rem;">🔻</span>' :
+          '<span style="font-size:1.4rem;">⭐</span>';
+        return `
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;">
+            ${visual}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.action_name}</div>
+              <div style="color:${plus?'var(--accent1)':'var(--danger)'};font-weight:700;font-size:0.8rem;">${plus?'+':''}${h.stars} ⭐</div>
+              <div style="color:var(--muted);font-size:0.75rem;">${h.timestamp}</div>
+            </div>
+          </div>`;
+      }).join('') + '</div>';
   }
   showScreen('screen-child');
 
-  document.getElementById('child-actions-legend').innerHTML = appData.actions.map(a=>`
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;">
-      ${renderVisual(a,'sm')}
-      <div>
-        <div style="font-weight:600;font-size:0.9rem;">${a.name}</div>
-        <div style="color:var(--accent1);font-weight:700;font-size:0.85rem;">+${a.stars} ⭐</div>
-      </div>
-    </div>
-  `).join('');
+  document.getElementById('child-actions-legend').innerHTML = renderByTier(
+    appData.actions,
+    a => `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;">
+        ${renderVisual(a,'sm')}
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">${a.name}</div>
+          <div style="color:var(--accent1);font-weight:700;font-size:0.85rem;">+${a.stars} ⭐</div>
+        </div>
+      </div>`,
+    'אין פעולות מוגדרות'
+  );
 
   // Rewards by tier
   const myStars = parseInt(c.stars)||0;
@@ -609,7 +624,24 @@ function enterChild(id) {
   }
 }
 
-// ── Parent Render ─────────────────────────
+// ── Tier render helper ────────────────────
+function renderByTier(items, renderCard, emptyMsg) {
+  if(!items.length) return `<div style="color:var(--muted);text-align:center;padding:24px;">${emptyMsg}</div>`;
+  const sorted = items.slice().sort((a,b)=>parseInt(a.stars)-parseInt(b.stars));
+  const tiers = [...new Set(sorted.map(i=>parseInt(i.stars)))];
+  return tiers.map(tier => {
+    const tierItems = sorted.filter(i=>parseInt(i.stars)===tier);
+    return `
+      <div class="rewards-tier">
+        <div class="rewards-tier-title">
+          <div class="tier-badge">⭐ ${tier} כוכבים</div>
+        </div>
+        <div class="rewards-grid">${tierItems.map(renderCard).join('')}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Child View ────────────────────────────
 function renderParent() {
   renderOverview();
   renderGive();
@@ -618,13 +650,33 @@ function renderParent() {
 
 function renderOverview() {
   const children = appData.users.filter(u=>u.role==='child');
-  document.getElementById('children-overview').innerHTML = children.map(c=>`
-    <div class="child-overview-card">
-      <div class="child-big-avatar">${c.emoji}</div>
-      <div class="child-name">${c.name}</div>
-      <div class="child-star-count">${c.stars||0} ⭐</div>
-    </div>
-  `).join('');
+  document.getElementById('children-overview').innerHTML = children.map(c=>{
+    const childHist = (appData.history||[]).filter(h=>String(h.child_id)===String(c.id));
+    const starsGiven = childHist.filter(h=>parseInt(h.stars)>0 && h.type!=='הפחתה');
+    const rewardsRedeemed = childHist.filter(h=>h.type==='פרס');
+    return `
+      <div class="child-overview-card">
+        <div class="child-big-avatar">${c.emoji}</div>
+        <div class="child-name">${c.name}</div>
+        <div class="child-star-count">${c.stars||0} ⭐</div>
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;text-align:right;">
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">פעולות אחרונות:</div>
+          ${starsGiven.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
+            starsGiven.slice(-3).reverse().map(h=>`
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span style="color:var(--text);">${h.action_name}</span>
+                <span style="color:var(--accent1);font-weight:700;">+${h.stars}⭐</span>
+              </div>`).join('')}
+          ${rewardsRedeemed.length>0 ? `
+            <div style="font-size:0.8rem;color:var(--muted);margin-top:8px;margin-bottom:4px;">פרסים שמומשו:</div>
+            ${rewardsRedeemed.slice(-2).reverse().map(h=>`
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;">
+                <span style="color:var(--accent2);">🎁 ${h.action_name}</span>
+                <span style="color:var(--danger);">${h.stars}⭐</span>
+              </div>`).join('')}` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function renderGive() {
@@ -638,13 +690,26 @@ function renderGive() {
   const sec = document.getElementById('give-actions-section');
   if(selectedChildId) {
     sec.style.display = 'block';
-    document.getElementById('give-actions-grid').innerHTML = appData.actions.map(a=>`
-      <div class="action-card" onclick="doGiveStars('${a.id}')">
-        <div style="margin-bottom:8px;">${renderVisual(a)}</div>
-        <div class="action-name">${a.name}</div>
-        <div class="action-stars-badge">+${a.stars} ⭐</div>
-      </div>
-    `).join('');
+    document.getElementById('give-actions-grid').innerHTML = renderByTier(
+      appData.actions,
+      a => `
+        <div class="action-card" onclick="doGiveStars('${a.id}')">
+          <div style="margin-bottom:8px;">${renderVisual(a)}</div>
+          <div class="action-name">${a.name}</div>
+          <div class="action-stars-badge">+${a.stars} ⭐</div>
+        </div>`,
+      'אין פעולות מוגדרות'
+    );
+    document.getElementById('give-rewards-grid').innerHTML = renderByTier(
+      appData.rewards||[],
+      r => `
+        <div class="action-card" onclick="doGiveReward('${r.id}')" style="border-color:rgba(255,107,157,0.3);">
+          <div style="margin-bottom:8px;">${renderVisual(r)}</div>
+          <div class="action-name">${r.name}</div>
+          <div class="action-stars-badge" style="background:rgba(255,107,157,0.15);color:var(--danger);">-${r.stars} ⭐</div>
+        </div>`,
+      'אין פרסים מוגדרים עדיין'
+    );
   } else {
     sec.style.display = 'none';
   }
@@ -676,6 +741,47 @@ function renderManage() {
       <button onclick="doDeleteAction('${a.id}')" class="btn btn-danger btn-sm" style="margin-top:12px;">מחק</button>
     </div>
   `).join('');
+
+  const rewardsInline = document.getElementById('manage-rewards-inline');
+  if(rewardsInline) {
+    rewardsInline.innerHTML = (appData.rewards||[]).map(r=>`
+      <div class="action-card">
+        <div style="margin-bottom:8px;">${renderVisual(r)}</div>
+        <div class="action-name">${r.name}</div>
+        <div class="action-stars-badge" style="background:rgba(255,107,157,0.15);color:var(--danger);">${r.stars} ⭐</div>
+        <button onclick="doDeleteReward('${r.id}')" class="btn btn-danger btn-sm" style="margin-top:12px;">מחק</button>
+      </div>
+    `).join('') || '<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px;">אין פרסים עדיין</div>';
+  }
+}
+
+function switchSubTab(name) {
+  ['stars','rewards'].forEach(t => {
+    document.getElementById('subtab-'+t).classList.toggle('active', t===name);
+    document.getElementById('give-sub-'+t).style.display = t===name ? 'block' : 'none';
+  });
+}
+
+async function doGiveReward(rewardId) {
+  if(!selectedChildId) return;
+  const child  = appData.users.find(u=>String(u.id)===String(selectedChildId));
+  const reward = appData.rewards.find(r=>String(r.id)===String(rewardId));
+  if(!child||!reward) return;
+  const cost = parseInt(reward.stars)||0;
+  const currentStars = parseInt(child.stars)||0;
+  if(currentStars < cost) {
+    showToast(`❌ ל-${child.name} אין מספיק כוכבים (יש ${currentStars}, צריך ${cost})`);
+    return;
+  }
+  if(!confirm(`לממש עבור ${child.name} את הפרס "${reward.name}" ב-${cost} כוכבים?`)) return;
+  showLoading(true);
+  try {
+    await api({ action:'removeStars', child_id:child.id, stars:cost, reason:reward.name, type:'פרס' });
+    await loadData(); renderParent();
+    showToast(`🎁 ${child.name} קיבל/ה "${reward.name}"!`);
+    createBurst();
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
 }
 
 function selectChild(id) {
@@ -724,7 +830,7 @@ async function doResetStars() {
   if(!confirm(`לאפס את כל ${current} הכוכבים של ${child.name}?`)) return;
   showLoading(true);
   try {
-    await api({ action:'removeStars', child_id:child.id, stars:current, reason:'איפוס כוכבים' });
+    await api({ action:'removeStars', child_id:child.id, stars:current, reason:'איפוס כוכבים', type:'איפוס' });
     await loadData(); renderParent();
     showToast(`🔄 כוכביו של ${child.name} אופסו`);
   } catch(e) { showToast('שגיאה: '+e.message); }
@@ -930,12 +1036,11 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
 // ── Tabs ──────────────────────────────────
 function switchTab(name) {
-  const tabs = ['overview','give','manage','rewards'];
+  const tabs = ['overview','give','manage'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(name==='give') renderGive();
-  if(name==='rewards') renderManageRewards();
 }
 
 // ── UI Helpers ────────────────────────────
