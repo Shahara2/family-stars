@@ -342,6 +342,15 @@
         <button class="btn btn-sm" onclick="openAddReward()">+ הוסף פרס</button>
       </div>
       <div class="actions-grid" id="manage-rewards-inline"></div>
+
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);">
+        <div class="section-title">🔑 סיסמת הורה</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="input-parent-password" placeholder="סיסמה חדשה" maxlength="20"
+            style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:Rubik,sans-serif;font-size:1rem;outline:none;width:180px;">
+          <button class="btn btn-sm" onclick="doChangeParentPassword()">💾 שמור סיסמה</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -492,13 +501,56 @@ function goHome() {
 }
 
 async function enterParent() {
+  const entered = prompt('🔑 סיסמת הורה:');
+  if(entered === null) return;
+  // טען נתונים ובדוק סיסמה מהשרת
+  showLoading(true);
+  try {
+    const d = await api({ action:'getAll' });
+    appData = d;
+    const correctPwd = String(appData.parentPassword || '1234');
+    if(entered !== correctPwd) {
+      showToast('❌ סיסמה שגויה');
+      showLoading(false);
+      return;
+    }
+  } catch(e) {
+    showToast('שגיאה בטעינה: ' + e.message);
+    showLoading(false);
+    return;
+  }
+  showLoading(false);
   document.getElementById('current-mode').textContent = '👨‍👩‍👧 הורה';
-  await loadData();
   showScreen('screen-parent');
   renderParent();
 }
 
+async function doChangeParentPassword() {
+  const newPwd = document.getElementById('input-parent-password').value.trim();
+  if(!newPwd) { showToast('הכנס סיסמה חדשה'); return; }
+  showLoading(true);
+  try {
+    await api({ action:'setParentPassword', password:newPwd });
+    await loadData();
+    document.getElementById('input-parent-password').value = '';
+    showToast('🔑 סיסמת הורה עודכנה!');
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
 let pollInterval = null;
+let lastKnownStars = {};
+
+function saveLastStars(childId, stars) {
+  lastKnownStars[childId] = stars;
+  localStorage.setItem('lastStars_' + childId, stars);
+}
+
+function getLastStars(childId) {
+  if(lastKnownStars[childId] !== undefined) return lastKnownStars[childId];
+  const stored = localStorage.getItem('lastStars_' + childId);
+  return stored !== null ? parseInt(stored) : undefined;
+}
 
 function startPolling(childId) {
   stopPolling();
@@ -508,19 +560,17 @@ function startPolling(childId) {
       const c = data.users.find(u => String(u.id) === String(childId));
       if(!c) return;
       const newStars = parseInt(c.stars)||0;
-      const prev = lastKnownStars[childId];
+      const prev = getLastStars(childId);
       if(prev !== undefined && newStars > prev) {
         const gained = newStars - prev;
-        lastKnownStars[childId] = newStars;
+        saveLastStars(childId, newStars);
         appData = data;
-        // Update display
         document.getElementById('child-stars-count').textContent = newStars;
         createBurst();
         showToast(`🌟 קיבלת ${gained} כוכבים חדשים! יש לך עכשיו ${newStars} ⭐`);
-        // Refresh history
         enterChild(childId);
       } else {
-        lastKnownStars[childId] = newStars;
+        saveLastStars(childId, newStars);
       }
     } catch(e) { /* silent fail */ }
   }, 30000); // every 30 seconds
@@ -549,7 +599,7 @@ function promptPassword(id) {
   const c = appData.users.find(u => String(u.id) === String(id));
   if(!c) return;
   // Store current stars so we can detect new ones on entry
-  if(lastKnownStars[id] === undefined) lastKnownStars[id] = parseInt(c.stars)||0;
+  if(getLastStars(id) === undefined) saveLastStars(id, parseInt(c.stars)||0);
   if(!c.password) { enterChild(id); return; }
   pendingChildId = id;
   document.getElementById('pwd-child-emoji').textContent = c.emoji;
@@ -583,7 +633,7 @@ function enterChild(id) {
 
   // Show animation if new stars since last visit
   const currentStars = parseInt(c.stars)||0;
-  const prev = lastKnownStars[id];
+  const prev = getLastStars(id);
   if(prev !== undefined && currentStars > prev) {
     const gained = currentStars - prev;
     setTimeout(() => {
@@ -591,7 +641,7 @@ function enterChild(id) {
       showToast(`🌟 קיבלת ${gained} כוכבים חדשים! יש לך עכשיו ${currentStars} ⭐`);
     }, 400);
   }
-  lastKnownStars[id] = currentStars;
+  saveLastStars(id, currentStars);
 
   const hist = appData.history.filter(h => String(h.child_id) === String(id));
   const el = document.getElementById('child-history');
