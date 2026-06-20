@@ -234,7 +234,7 @@
 <!-- Screen: Role -->
 <div id="screen-role" class="screen active">
   <div class="role-title">ברוכים הבאים! 👋</div>
-  <div class="role-subtitle">מי אתה?</div>
+  <div class="role-subtitle">מי אתה היום?</div>
   <div class="role-cards">
     <div class="role-card" onclick="enterParent()">
       <div class="role-icon">👨‍👩‍👧</div>
@@ -242,8 +242,8 @@
       <div style="color:var(--muted);font-size:0.9rem;margin-top:8px;">נהל כוכבים ופעולות</div>
     </div>
     <div class="role-card" onclick="showChildSelect()">
-      <div class="role-icon">👦</div>
-      <div class="role-name" style="color:var(--accent3)">ילד</div>
+      <div class="role-icon">🧒</div>
+      <div class="role-name" style="color:var(--accent3)">ילד/ה</div>
       <div style="color:var(--muted);font-size:0.9rem;margin-top:8px;">ראה את הכוכבים שלי</div>
     </div>
   </div>
@@ -486,6 +486,7 @@ function showScreen(id) {
 }
 
 function goHome() {
+  stopPolling();
   showScreen('screen-role');
   document.getElementById('current-mode').textContent = 'בחר תפקיד';
 }
@@ -497,7 +498,37 @@ async function enterParent() {
   renderParent();
 }
 
-let lastKnownStars = {};
+let pollInterval = null;
+
+function startPolling(childId) {
+  stopPolling();
+  pollInterval = setInterval(async () => {
+    try {
+      const data = await api({ action:'getAll' });
+      const c = data.users.find(u => String(u.id) === String(childId));
+      if(!c) return;
+      const newStars = parseInt(c.stars)||0;
+      const prev = lastKnownStars[childId];
+      if(prev !== undefined && newStars > prev) {
+        const gained = newStars - prev;
+        lastKnownStars[childId] = newStars;
+        appData = data;
+        // Update display
+        document.getElementById('child-stars-count').textContent = newStars;
+        createBurst();
+        showToast(`🌟 קיבלת ${gained} כוכבים חדשים! יש לך עכשיו ${newStars} ⭐`);
+        // Refresh history
+        enterChild(childId);
+      } else {
+        lastKnownStars[childId] = newStars;
+      }
+    } catch(e) { /* silent fail */ }
+  }, 30000); // every 30 seconds
+}
+
+function stopPolling() {
+  if(pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
 
 async function showChildSelect() {
   await loadData();
@@ -568,7 +599,7 @@ function enterChild(id) {
     el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">עדיין אין כוכבים... קדימה לעבודה! 💪</div>';
   } else {
     el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">` +
-      [...hist].reverse().slice(0,5).map(h => {
+      [...hist].reverse().slice(0,10).map(h => {
         const plus = parseInt(h.stars) > 0;
         const relatedAction = appData.actions.find(a=>String(a.id)===String(h.action_id));
         const relatedReward = appData.rewards ? appData.rewards.find(r=>r.name===h.action_name) : null;
@@ -588,6 +619,7 @@ function enterChild(id) {
       }).join('') + '</div>';
   }
   showScreen('screen-child');
+  startPolling(id);
 
   document.getElementById('child-actions-legend').innerHTML = renderByTier(
     appData.actions,
@@ -675,14 +707,14 @@ function renderOverview() {
         <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;text-align:right;">
           <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">פעולות אחרונות:</div>
           ${starsGiven.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
-            starsGiven.slice(-3).reverse().map(h=>`
+            starsGiven.slice(-10).reverse().map(h=>`
               <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
                 <span style="color:var(--text);">${h.action_name}</span>
                 <span style="color:var(--accent1);font-weight:700;">+${h.stars}⭐</span>
               </div>`).join('')}
           ${rewardsRedeemed.length>0 ? `
             <div style="font-size:0.8rem;color:var(--muted);margin-top:8px;margin-bottom:4px;">פרסים שמומשו:</div>
-            ${rewardsRedeemed.slice(-2).reverse().map(h=>`
+            ${rewardsRedeemed.slice(-5).reverse().map(h=>`
               <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;">
                 <span style="color:var(--accent2);">🎁 ${h.action_name}</span>
                 <span style="color:var(--danger);">${h.stars}⭐</span>
