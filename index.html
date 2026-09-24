@@ -167,15 +167,6 @@
   .star-burst { position:fixed; font-size:2rem; pointer-events:none; z-index:9999; animation:burst 0.8s ease-out forwards; }
   @keyframes burst { 0%{opacity:1;transform:scale(0.5) translateY(0)} 100%{opacity:0;transform:scale(2) translateY(-80px)} }
 
-  .big-congrats {
-    position:fixed; top:38%; left:50%; z-index:9998; pointer-events:none;
-    font-family:Arial,sans-serif; font-size:2.2rem; font-weight:800; text-align:center;
-    color:var(--accent1); text-shadow:0 0 30px rgba(247,201,72,0.8), 0 4px 12px rgba(0,0,0,0.6);
-    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards, popOut 0.4s ease-in 1.8s forwards;
-  }
-  @keyframes popIn { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.3);} 100%{opacity:1;transform:translate(-50%,-50%) scale(1);} }
-  @keyframes popOut { 0%{opacity:1;} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.2);} }
-
   /* Rewards */
   .rewards-tier { margin-bottom:28px; }
   .rewards-tier-title {
@@ -576,8 +567,8 @@ function startPolling(childId) {
         saveLastStars(childId, newStars);
         appData = data;
         document.getElementById('child-stars-count').textContent = newStars;
-        createBurst();
-        showToast(`🌟 קיבלת ${gained} כוכבים חדשים! יש לך עכשיו ${newStars} ⭐`);
+               createBurst();
+        showToast(`🌟 קיבלת ${gained} כוכבים חדשים! קיבלת ${newStars} ⭐`);
         showBigCongrats(`🎉 כל הכבוד! 🎉`);
         enterChild(childId);
       } else {
@@ -629,3 +620,555 @@ function checkPassword() {
     enterChild(pendingChildId);
   } else {
     document.getElementById('pwd-error').textContent = '❌ סיסמה שגויה, נסה שוב';
+    document.getElementById('input-password').value = '';
+    document.getElementById('input-password').focus();
+  }
+}
+
+function enterChild(id) {
+  const c = appData.users.find(u => String(u.id) === String(id));
+  if(!c) return;
+  document.getElementById('current-mode').textContent = c.name;
+  document.getElementById('child-view-name').textContent = c.name;
+  document.getElementById('child-view-avatar').textContent = c.emoji;
+  document.getElementById('child-stars-count').textContent = c.stars || 0;
+
+  // Show animation if new stars since last visit
+  const currentStars = parseInt(c.stars)||0;
+  const prev = getLastStars(id);
+  if(prev !== undefined && currentStars > prev) {
+    const gained = currentStars - prev;
+    setTimeout(() => {
+      createBurst();
+      showToast(`🌟 קיבלת ${gained} כוכבים חדשים! יש לך עכשיו ${currentStars} ⭐`);
+    }, 400);
+  }
+  saveLastStars(id, currentStars);
+
+  const hist = appData.history.filter(h => String(h.child_id) === String(id));
+  const el = document.getElementById('child-history');
+  if(!hist.length) {
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">עדיין אין כוכבים... קדימה לעבודה! 💪</div>';
+  } else {
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">` +
+      [...hist].reverse().slice(0,10).map(h => {
+        const plus = parseInt(h.stars) > 0;
+        const relatedAction = appData.actions.find(a=>String(a.id)===String(h.action_id));
+        const relatedReward = appData.rewards ? appData.rewards.find(r=>r.name===h.action_name) : null;
+        const visualItem = relatedReward || relatedAction;
+        const visual = visualItem ? renderVisual(visualItem,'sm') :
+          h.type==='הפחתה' ? '<span style="font-size:1.4rem;">🔻</span>' :
+          '<span style="font-size:1.4rem;">⭐</span>';
+        return `
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;">
+            ${visual}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.action_name}</div>
+              <div style="color:${plus?'var(--accent1)':'var(--danger)'};font-weight:700;font-size:0.8rem;">${plus?'+':''}${h.stars} ⭐</div>
+              <div style="color:var(--muted);font-size:0.75rem;">${h.timestamp}</div>
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+  }
+  showScreen('screen-child');
+  startPolling(id);
+
+  document.getElementById('child-actions-legend').innerHTML = renderByTier(
+    appData.actions,
+    a => `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        ${renderVisual(a,'sm')}
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">${a.name}</div>
+          <div style="color:var(--accent1);font-weight:700;font-size:0.85rem;">+${a.stars} ⭐</div>
+        </div>
+      </div>`,
+    'אין פעולות מוגדרות',
+    true
+  );
+
+  // Rewards by tier
+  const myStars = parseInt(c.stars)||0;
+  const rewards = (appData.rewards||[]).slice().sort((a,b)=>a.stars-b.stars);
+  const tiers = [...new Set(rewards.map(r=>parseInt(r.stars)))].sort((a,b)=>a-b);
+  const rewardsEl = document.getElementById('child-rewards-legend');
+  if(!rewards.length) {
+    rewardsEl.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px;">ההורים עוד לא הגדירו פרסים</div>';
+  } else {
+    rewardsEl.innerHTML = tiers.map(tier => {
+      const tierRewards = rewards.filter(r=>parseInt(r.stars)===tier);
+      return `
+        <div class="rewards-tier">
+          <div class="rewards-tier-title">
+            <div class="tier-badge">⭐ ${tier} כוכבים</div>
+            ${myStars>=tier ? '<div style="color:var(--success);font-size:0.9rem;font-weight:600;">✅ יש לך מספיק!</div>' : `<div style="color:var(--muted);font-size:0.85rem;">עוד ${tier-myStars} כוכבים</div>`}
+          </div>
+          <div class="rewards-grid">
+            ${tierRewards.map(r=>`
+              <div class="reward-card ${myStars>=tier?'reachable':'locked'}">
+                ${myStars<tier?'<div class="reward-lock">🔒</div>':''}
+                <div style="margin-bottom:8px;">${renderVisual(r)}</div>
+                <div class="reward-name">${r.name}</div>
+                <div class="reward-cost">${r.stars} ⭐</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+// ── Tier render helper ────────────────────
+function renderByTier(items, renderCard, emptyMsg, horizontal=false) {
+  if(!items.length) return `<div style="color:var(--muted);text-align:center;padding:24px;">${emptyMsg}</div>`;
+  const sorted = items.slice().sort((a,b)=>parseInt(a.stars)-parseInt(b.stars));
+  const tiers = [...new Set(sorted.map(i=>parseInt(i.stars)))];
+  return tiers.map(tier => {
+    const tierItems = sorted.filter(i=>parseInt(i.stars)===tier);
+    const gridStyle = horizontal
+      ? 'display:flex;flex-wrap:wrap;gap:10px;'
+      : 'display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;';
+    return `
+      <div class="rewards-tier">
+        <div class="rewards-tier-title">
+          <div class="tier-badge">⭐ ${tier} כוכבים</div>
+        </div>
+        <div style="${gridStyle}">${tierItems.map(renderCard).join('')}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Child View ────────────────────────────
+function renderParent() {
+  renderOverview();
+  renderGive();
+  renderManage();
+}
+
+function renderOverview() {
+  const children = appData.users.filter(u=>u.role==='child');
+  document.getElementById('children-overview').innerHTML = children.map(c=>{
+    const childHist = (appData.history||[]).filter(h=>String(h.child_id)===String(c.id));
+    const starsGiven = childHist.filter(h=>parseInt(h.stars)>0 && h.type!=='הפחתה');
+    const rewardsRedeemed = childHist.filter(h=>h.type==='פרס');
+    return `
+      <div class="child-overview-card" onclick="selectChildAndGo('${c.id}')" style="cursor:pointer;">
+        <div class="child-big-avatar">${c.emoji}</div>
+        <div class="child-name">${c.name}</div>
+        <div class="child-star-count">${c.stars||0} ⭐</div>
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;text-align:right;">
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">פעולות אחרונות:</div>
+          ${starsGiven.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
+            starsGiven.slice(-10).reverse().map(h=>`
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span style="color:var(--text);">${h.action_name}</span>
+                <span style="color:var(--accent1);font-weight:700;">+${h.stars}⭐</span>
+              </div>`).join('')}
+          ${rewardsRedeemed.length>0 ? `
+            <div style="font-size:0.8rem;color:var(--muted);margin-top:8px;margin-bottom:4px;">פרסים שמומשו:</div>
+            ${rewardsRedeemed.slice(-5).reverse().map(h=>`
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;">
+                <span style="color:var(--accent2);">🎁 ${h.action_name}</span>
+                <span style="color:var(--danger);">${h.stars}⭐</span>
+              </div>`).join('')}` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderGive() {
+  const children = appData.users.filter(u=>u.role==='child');
+  document.getElementById('give-children-grid').innerHTML = children.map(c=>`
+    <div class="child-chip ${String(selectedChildId)===String(c.id)?'active':''}" onclick="selectChild('${c.id}')">
+      <div class="child-avatar">${c.emoji}</div>${c.name}
+    </div>
+  `).join('');
+
+  const sec = document.getElementById('give-actions-section');
+  if(selectedChildId) {
+    sec.style.display = 'block';
+    document.getElementById('give-actions-grid').innerHTML = renderByTier(
+      appData.actions,
+      a => `
+        <div class="action-card" onclick="doGiveStars('${a.id}')">
+          <div style="margin-bottom:8px;">${renderVisual(a)}</div>
+          <div class="action-name">${a.name}</div>
+          <div class="action-stars-badge">+${a.stars} ⭐</div>
+        </div>`,
+      'אין פעולות מוגדרות'
+    );
+    document.getElementById('give-rewards-grid').innerHTML = renderByTier(
+      appData.rewards||[],
+      r => `
+        <div class="action-card" onclick="doGiveReward('${r.id}')" style="border-color:rgba(255,107,157,0.3);">
+          <div style="margin-bottom:8px;">${renderVisual(r)}</div>
+          <div class="action-name">${r.name}</div>
+          <div class="action-stars-badge" style="background:rgba(255,107,157,0.15);color:var(--danger);">-${r.stars} ⭐</div>
+        </div>`,
+      'אין פרסים מוגדרים עדיין'
+    );
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+function renderManage() {
+  const children = appData.users.filter(u=>u.role==='child');
+  document.getElementById('manage-children').innerHTML = children.map(c=>`
+    <div class="child-overview-card">
+      <div class="child-big-avatar">${c.emoji}</div>
+      <div class="child-name">${c.name}</div>
+      <div class="child-star-count">${c.stars||0} ⭐</div>
+      <div style="margin-top:12px;">
+        <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px;">סיסמה נוכחית: <strong style="color:var(--accent4);">${c.password||'לא הוגדרה'}</strong></div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <input type="text" id="pwd-${c.id}" placeholder="סיסמה חדשה" maxlength="10"
+            style="width:110px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:Arial,sans-serif;font-size:0.85rem;outline:none;text-align:center;">
+          <button onclick="doSetPassword('${c.id}')" class="btn btn-sm" style="padding:6px 12px;font-size:0.8rem;">שמור</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('manage-actions').innerHTML = appData.actions.map(a=>`
+    <div class="action-card">
+      <div style="margin-bottom:8px;">${renderVisual(a)}</div>
+      <div class="action-name">${a.name}</div>
+      <div class="action-stars-badge">+${a.stars} ⭐</div>
+      <button onclick="doDeleteAction('${a.id}')" class="btn btn-danger btn-sm" style="margin-top:12px;">מחק</button>
+    </div>
+  `).join('');
+
+  const rewardsInline = document.getElementById('manage-rewards-inline');
+  if(rewardsInline) {
+    rewardsInline.innerHTML = (appData.rewards||[]).map(r=>`
+      <div class="action-card">
+        <div style="margin-bottom:8px;">${renderVisual(r)}</div>
+        <div class="action-name">${r.name}</div>
+        <div class="action-stars-badge" style="background:rgba(255,107,157,0.15);color:var(--danger);">${r.stars} ⭐</div>
+        <button onclick="doDeleteReward('${r.id}')" class="btn btn-danger btn-sm" style="margin-top:12px;">מחק</button>
+      </div>
+    `).join('') || '<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px;">אין פרסים עדיין</div>';
+  }
+}
+
+function switchSubTab(name) {
+  ['stars','rewards'].forEach(t => {
+    document.getElementById('subtab-'+t).classList.toggle('active', t===name);
+    document.getElementById('give-sub-'+t).style.display = t===name ? 'block' : 'none';
+  });
+}
+
+async function doGiveReward(rewardId) {
+  if(!selectedChildId) return;
+  const child  = appData.users.find(u=>String(u.id)===String(selectedChildId));
+  const reward = appData.rewards.find(r=>String(r.id)===String(rewardId));
+  if(!child||!reward) return;
+  const cost = parseInt(reward.stars)||0;
+  const currentStars = parseInt(child.stars)||0;
+  if(currentStars < cost) {
+    showToast(`❌ ל-${child.name} אין מספיק כוכבים (יש ${currentStars}, צריך ${cost})`);
+    return;
+  }
+  if(!confirm(`לממש עבור ${child.name} את הפרס "${reward.name}" ב-${cost} כוכבים?`)) return;
+  showLoading(true);
+  try {
+    await api({ action:'removeStars', child_id:child.id, stars:cost, reason:reward.name, type:'פרס' });
+    await loadData(); renderParent();
+    showToast(`🎁 ${child.name} קיבל/ה "${reward.name}"!`);
+    createBurst();
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+function selectChildAndGo(id) {
+  selectedChildId = id;
+  switchTab('give');
+}
+
+function selectChild(id) {
+  selectedChildId = id;
+  renderGive();
+}
+
+// ── Actions ───────────────────────────────
+async function doGiveStars(actionId) {
+  if(!selectedChildId) return;
+  const child  = appData.users.find(u=>String(u.id)===String(selectedChildId));
+  const action = appData.actions.find(a=>String(a.id)===String(actionId));
+  if(!child||!action) return;
+  showLoading(true);
+  try {
+    await api({ action:'addStars', child_id:child.id, action_id:action.id, action_name:action.name, stars:action.stars });
+    await loadData();
+    renderParent();
+    showToast(`${child.emoji} ${child.name} קיבל/ה ${action.stars} ⭐`);
+    createBurst();
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doRemoveStars() {
+  if(!selectedChildId) return;
+  const child  = appData.users.find(u=>String(u.id)===String(selectedChildId));
+  const amount = parseInt(document.getElementById('remove-amount').value)||0;
+  const reason = document.getElementById('remove-reason').value||'מימוש פרס';
+  if(!amount) return;
+  if(!confirm(`להוריד ${amount} כוכבים מ-${child.name}?`)) return;
+  showLoading(true);
+  try {
+    await api({ action:'removeStars', child_id:child.id, stars:amount, reason });
+    await loadData(); renderParent();
+    showToast(`🔻 הורדו ${amount} כוכבים מ-${child.name}`);
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doResetStars() {
+  if(!selectedChildId) return;
+  const child = appData.users.find(u=>String(u.id)===String(selectedChildId));
+  const current = parseInt(child.stars)||0;
+  if(current === 0) { showToast('הכוכבים כבר מאופסים'); return; }
+  if(!confirm(`לאפס את כל ${current} הכוכבים של ${child.name}?`)) return;
+  showLoading(true);
+  try {
+    await api({ action:'removeStars', child_id:child.id, stars:current, reason:'איפוס כוכבים', type:'איפוס' });
+    await loadData(); renderParent();
+    showToast(`🔄 כוכביו של ${child.name} אופסו`);
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doClearHistory() {
+  if(!selectedChildId) return;
+  const child = appData.users.find(u=>String(u.id)===String(selectedChildId));
+  if(!confirm(`למחוק את כל ההיסטוריה של ${child.name}? פעולה זו לא ניתנת לביטול.`)) return;
+  showLoading(true);
+  try {
+    await api({ action:'clearHistory', child_id:child.id });
+    await loadData(); renderParent();
+    showToast(`🗑️ ההיסטוריה של ${child.name} נמחקה`);
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doSetPassword(id) {
+  const pwd = document.getElementById('pwd-'+id).value.trim();
+  if(!pwd) { showToast('הכנס סיסמה'); return; }
+  showLoading(true);
+  try {
+    await api({ action:'setPassword', child_id:id, password:pwd });
+    await loadData(); renderParent();
+    showToast('🔑 הסיסמה עודכנה בהצלחה!');
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doDeleteChild(id) {
+  if(!confirm('למחוק ילד זה?')) return;
+  showLoading(true);
+  try {
+    await api({ action:'deleteChild', id });
+    await loadData(); renderParent();
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doDeleteAction(id) {
+  if(!confirm('למחוק פעולה זו?')) return;
+  showLoading(true);
+  try {
+    await api({ action:'deleteAction', id });
+    await loadData(); renderParent();
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+// ── Modals ────────────────────────────────
+function openAddChild() {
+  selectedAvatarEmoji = CHILD_EMOJIS[0];
+  document.getElementById('input-child-name').value='';
+  document.getElementById('input-child-password').value='';
+  document.getElementById('avatar-emoji-grid').innerHTML = CHILD_EMOJIS.map(e=>
+    `<span class="emoji-opt ${e===selectedAvatarEmoji?'selected':''}" onclick="selEmoji('avatar','${e}',this)">${e}</span>`).join('');
+  openModal('modal-child');
+}
+
+// ── Visual helper: emoji or image ─────────
+function fixImageUrl(url) {
+  if(!url) return '';
+  // Convert Drive share URL to thumbnail
+  const shareMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if(shareMatch) return `https://drive.google.com/thumbnail?id=${shareMatch[1]}&sz=w300`;
+  // Convert Drive open URL
+  const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if(openMatch) return `https://drive.google.com/thumbnail?id=${openMatch[1]}&sz=w300`;
+  return url;
+}
+
+function renderVisual(item, size='lg') {
+  const imgUrl = fixImageUrl(item.image);
+  if(imgUrl) {
+    const cls = size==='lg' ? 'item-visual' : 'item-visual-sm';
+    const fontSize = size==='lg' ? '2.2' : '1.5';
+    return `<img src="${imgUrl}" class="${cls}" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span style="display:none;font-size:${fontSize}rem;">${item.emoji||'⭐'}</span>`;
+  }
+  return `<div style="font-size:${size==='lg'?'2.2':'1.6'}rem;">${item.emoji||'⭐'}</div>`;
+}
+
+function setupImgPreview(inputId, previewId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  input.addEventListener('input', ()=>{
+    const url = fixImageUrl(input.value.trim());
+    preview.innerHTML = url ? `<img src="${url}" class="img-preview-thumb" referrerpolicy="no-referrer" onerror="this.alt='קישור לא תקין'">` : '';
+  });
+}
+
+function openAddAction() {
+  selectedActionEmoji = ACTION_EMOJIS[0];
+  document.getElementById('input-action-name').value='';
+  document.getElementById('input-action-stars').value='3';
+  document.getElementById('input-action-image').value='';
+  document.getElementById('action-img-preview').innerHTML='';
+  document.getElementById('action-emoji-grid').innerHTML = ACTION_EMOJIS.map(e=>
+    `<span class="emoji-opt ${e===selectedActionEmoji?'selected':''}" onclick="selEmoji('action','${e}',this)">${e}</span>`).join('');
+  openModal('modal-action');
+  setTimeout(()=>setupImgPreview('input-action-image','action-img-preview'),100);
+}
+
+function selEmoji(type, e, el) {
+  if(type==='avatar') selectedAvatarEmoji=e;
+  else if(type==='action') selectedActionEmoji=e;
+  else selectedRewardEmoji=e;
+  const gridId = type==='avatar'?'avatar-emoji-grid': type==='action'?'action-emoji-grid':'reward-emoji-grid';
+  document.querySelectorAll('#'+gridId+' .emoji-opt').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function saveChild() {
+  const name = document.getElementById('input-child-name').value.trim();
+  const password = document.getElementById('input-child-password').value.trim();
+  if(!name) { alert('הכנס שם'); return; }
+  showLoading(true);
+  try {
+    await api({ action:'addChild', name, emoji:selectedAvatarEmoji, password });
+    await loadData(); renderParent();
+    closeModal('modal-child');
+    showToast(`${selectedAvatarEmoji} ${name} נוסף/ה!`);
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function saveAction() {
+  const name  = document.getElementById('input-action-name').value.trim();
+  const stars = parseInt(document.getElementById('input-action-stars').value)||3;
+  const imageField = document.getElementById('input-action-image');
+  const image = imageField ? imageField.value.trim() : '';
+  console.log('image field:', imageField, 'value:', image);
+  if(!name) { alert('הכנס שם פעולה'); return; }
+  showLoading(true);
+  try {
+    await api({ action:'addAction', name, emoji:selectedActionEmoji, stars, image: image });
+    await loadData(); renderParent();
+    closeModal('modal-action');
+    showToast(`${image?'🖼️':selectedActionEmoji} "${name}" נוספה!`);
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+function renderManageRewards() {
+  const rewards = (appData.rewards||[]).slice().sort((a,b)=>a.stars-b.stars);
+  const el = document.getElementById('manage-rewards-list');
+  if(!rewards.length) {
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;">עוד לא הוגדרו פרסים</div>';
+    return;
+  }
+  el.innerHTML = `<div class="actions-grid">${rewards.map(r=>`
+    <div class="action-card">
+      <div style="margin-bottom:8px;">${renderVisual(r)}</div>
+      <div class="action-name">${r.name}</div>
+      <div class="action-stars-badge">${r.stars} ⭐</div>
+      <button onclick="doDeleteReward('${r.id}')" class="btn btn-danger btn-sm" style="margin-top:12px;">מחק</button>
+    </div>
+  `).join('')}</div>`;
+}
+
+function openAddReward() {
+  selectedRewardEmoji = REWARD_EMOJIS[0];
+  document.getElementById('input-reward-name').value='';
+  document.getElementById('input-reward-stars').value='10';
+  document.getElementById('input-reward-image').value='';
+  document.getElementById('reward-img-preview').innerHTML='';
+  document.getElementById('reward-emoji-grid').innerHTML = REWARD_EMOJIS.map(e=>
+    `<span class="emoji-opt ${e===selectedRewardEmoji?'selected':''}" onclick="selEmoji('reward','${e}',this)">${e}</span>`).join('');
+  openModal('modal-reward');
+  setTimeout(()=>setupImgPreview('input-reward-image','reward-img-preview'),100);
+}
+
+async function saveReward() {
+  const name  = document.getElementById('input-reward-name').value.trim();
+  const stars = parseInt(document.getElementById('input-reward-stars').value)||10;
+  const image = document.getElementById('input-reward-image').value.trim();
+  if(!name) { alert('הכנס שם פרס'); return; }
+  showLoading(true);
+  try {
+    await api({ action:'addReward', name, emoji:selectedRewardEmoji, stars, image });
+    await loadData();
+    renderManageRewards();
+    closeModal('modal-reward');
+    showToast(`${image?'🖼️':selectedRewardEmoji} "${name}" נוסף!`);
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+async function doDeleteReward(id) {
+  if(!confirm('למחוק פרס זה?')) return;
+  showLoading(true);
+  try {
+    await api({ action:'deleteReward', id });
+    await loadData();
+    renderManageRewards();
+  } catch(e) { showToast('שגיאה: '+e.message); }
+  showLoading(false);
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Tabs ──────────────────────────────────
+function switchTab(name) {
+  const tabs = ['overview','give','manage'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='give') renderGive();
+}
+
+// ── UI Helpers ────────────────────────────
+function showLoading(v) { document.getElementById('loading').classList.toggle('hidden',!v); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function createBurst() {
+  for(let i=0;i<5;i++) setTimeout(()=>{
+    const el = document.createElement('div');
+    el.className='star-burst'; el.textContent='⭐';
+    el.style.left=(30+Math.random()*40)+'%';
+    el.style.top=(30+Math.random()*30)+'%';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),900);
+  },i*100);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
