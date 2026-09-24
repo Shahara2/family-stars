@@ -567,8 +567,9 @@ function startPolling(childId) {
         saveLastStars(childId, newStars);
         appData = data;
         document.getElementById('child-stars-count').textContent = newStars;
-        createBurst();
-        showToast(`🌟 קיבלת ${gained} כוכבים חדשים! יש לך עכשיו ${newStars} ⭐`);
+               createBurst();
+        showToast(`🌟 קיבלת ${gained} כוכבים חדשים! קיבלת ${newStars} ⭐`);
+        showBigCongrats(`🎉 כל הכבוד! 🎉`);
         enterChild(childId);
       } else {
         saveLastStars(childId, newStars);
