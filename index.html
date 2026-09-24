@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>הכוכבים שלי ⭐</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0f0c29;
@@ -22,7 +21,7 @@
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family: 'Rubik', sans-serif;
+    font-family: 'Arial', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -37,7 +36,7 @@
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top:0; z-index:100;
   }
-  .logo { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--accent1); display:flex; align-items:center; gap:8px; text-shadow:0 0 20px rgba(247,201,72,0.5); }
+  .logo { font-family:Arial,sans-serif; font-size:1.6rem; color:var(--accent1); display:flex; align-items:center; gap:8px; text-shadow:0 0 20px rgba(247,201,72,0.5); }
   .mode-badge { background:var(--card); border:1px solid var(--border); padding:6px 14px; border-radius:20px; font-size:0.85rem; color:var(--muted); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
   .mode-badge:hover { border-color:var(--accent4); color:var(--accent4); }
   .container { max-width:900px; margin:0 auto; padding:32px 20px; }
@@ -56,7 +55,7 @@
     flex:1; min-width:260px;
     background: var(--card); border:1px solid var(--border);
     border-radius: 10px; padding:10px 14px;
-    color: var(--text); font-family:'Rubik',sans-serif; font-size:0.95rem;
+    color: var(--text); font-family:'Arial',sans-serif; font-size:0.95rem;
     outline:none;
   }
   #config-banner input:focus { border-color:var(--accent4); }
@@ -67,18 +66,18 @@
   #screen-role, #screen-child-select { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:80vh; gap:32px; text-align:center; }
   #screen-role.active, #screen-child-select.active { display:flex; }
 
-  .role-title { font-family:'Fredoka One',cursive; font-size:2.4rem; }
+  .role-title { font-family:Arial,sans-serif; font-size:2.4rem; }
   .role-subtitle { color:var(--muted); font-size:1.1rem; }
   .role-cards { display:flex; gap:24px; flex-wrap:wrap; justify-content:center; }
   .role-card { background:var(--card); border:2px solid var(--border); border-radius:24px; padding:40px 48px; cursor:pointer; transition:all 0.3s; min-width:200px; }
   .role-card:hover { border-color:var(--accent1); transform:translateY(-4px); box-shadow:0 12px 40px rgba(247,201,72,0.2); }
   .role-icon { font-size:4rem; margin-bottom:16px; }
-  .role-name { font-family:'Fredoka One',cursive; font-size:1.5rem; }
+  .role-name { font-family:Arial,sans-serif; font-size:1.5rem; }
 
   /* Stars hero */
   .stars-hero { background:linear-gradient(135deg,rgba(247,201,72,0.15),rgba(167,139,250,0.1)); border:1px solid rgba(247,201,72,0.3); border-radius:24px; padding:32px; text-align:center; margin-bottom:32px; position:relative; overflow:hidden; }
   .stars-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%,rgba(247,201,72,0.1),transparent 70%); }
-  .stars-count { font-family:'Fredoka One',cursive; font-size:5rem; color:var(--accent1); line-height:1; text-shadow:0 0 30px rgba(247,201,72,0.6); }
+  .stars-count { font-family:Arial,sans-serif; font-size:5rem; color:var(--accent1); line-height:1; text-shadow:0 0 30px rgba(247,201,72,0.6); }
   .stars-label { color:var(--muted); font-size:1.1rem; margin-top:8px; }
 
   /* Tabs */
@@ -90,7 +89,7 @@
   .tab-content.active { display:block; }
 
   /* Cards & Grids */
-  .section-title { font-family:'Fredoka One',cursive; font-size:1.4rem; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+  .section-title { font-family:Arial,sans-serif; font-size:1.4rem; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
   .children-grid { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:32px; }
   .child-chip { display:flex; align-items:center; gap:10px; background:var(--card); border:2px solid var(--border); border-radius:50px; padding:10px 20px; cursor:pointer; transition:all 0.2s; font-size:1rem; font-weight:600; }
   .child-chip:hover, .child-chip.active { border-color:var(--accent1); background:rgba(247,201,72,0.1); }
@@ -109,7 +108,7 @@
   .child-overview-card:hover { border-color:var(--accent4); transform:translateY(-2px); }
   .child-big-avatar { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 12px; background:rgba(167,139,250,0.2); }
   .child-name { font-weight:700; font-size:1.1rem; margin-bottom:4px; }
-  .child-star-count { color:var(--accent1); font-family:'Fredoka One',cursive; font-size:1.6rem; }
+  .child-star-count { color:var(--accent1); font-family:Arial,sans-serif; font-size:1.6rem; }
 
   /* History */
   .history-list { display:flex; flex-direction:column; gap:10px; }
@@ -126,15 +125,15 @@
   .remove-panel { background:rgba(255,107,157,0.08); border:1px solid rgba(255,107,157,0.25); border-radius:20px; padding:24px; margin-bottom:32px; }
   .remove-panel .section-title { color:var(--danger); }
   .remove-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-  .remove-row input { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 14px; color:var(--text); font-family:'Rubik',sans-serif; font-size:1rem; width:80px; outline:none; text-align:center; }
+  .remove-row input { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 14px; color:var(--text); font-family:'Arial',sans-serif; font-size:1rem; width:80px; outline:none; text-align:center; }
   .remove-row input[type=text] { flex:1; min-width:160px; width:auto; text-align:right; }
 
   /* Buttons */
-  .btn { background:linear-gradient(135deg,var(--accent1),#f59e0b); color:#1a1200; border:none; padding:12px 28px; border-radius:50px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'Rubik',sans-serif; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
+  .btn { background:linear-gradient(135deg,var(--accent1),#f59e0b); color:#1a1200; border:none; padding:12px 28px; border-radius:50px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'Arial',sans-serif; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
   .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(247,201,72,0.35); }
   .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
   .btn-danger { background:linear-gradient(135deg,#ff6b9d,#e11d48); color:#fff; }
-  .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); padding:10px 24px; border-radius:50px; font-size:0.95rem; cursor:pointer; font-family:'Rubik',sans-serif; transition:all 0.2s; }
+  .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); padding:10px 24px; border-radius:50px; font-size:0.95rem; cursor:pointer; font-family:'Arial',sans-serif; transition:all 0.2s; }
   .btn-ghost:hover { border-color:var(--accent4); color:var(--accent4); }
   .btn-sm { padding:6px 14px; font-size:0.8rem; }
 
@@ -143,10 +142,10 @@
   .modal-overlay.open { opacity:1; pointer-events:all; }
   .modal { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:32px; max-width:440px; width:90%; transform:scale(0.9); transition:transform 0.3s; }
   .modal-overlay.open .modal { transform:scale(1); }
-  .modal h3 { font-family:'Fredoka One',cursive; font-size:1.5rem; margin-bottom:20px; }
+  .modal h3 { font-family:Arial,sans-serif; font-size:1.5rem; margin-bottom:20px; }
   .form-group { margin-bottom:18px; }
   .form-group label { display:block; color:var(--muted); font-size:0.9rem; margin-bottom:8px; }
-  .form-group input { width:100%; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 16px; color:var(--text); font-family:'Rubik',sans-serif; font-size:1rem; outline:none; transition:border-color 0.2s; }
+  .form-group input { width:100%; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 16px; color:var(--text); font-family:'Arial',sans-serif; font-size:1rem; outline:none; transition:border-color 0.2s; }
   .form-group input:focus { border-color:var(--accent4); }
   .emoji-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .emoji-opt { font-size:1.6rem; cursor:pointer; padding:6px; border-radius:8px; border:2px solid transparent; transition:all 0.15s; }
@@ -175,7 +174,7 @@
   .tier-badge {
     background: linear-gradient(135deg, var(--accent1), #f59e0b);
     color: #1a1200;
-    font-family:'Fredoka One',cursive;
+    font-family:Arial,sans-serif;
     font-size:1.1rem;
     padding:4px 16px;
     border-radius:20px;
@@ -233,17 +232,17 @@
 
 <!-- Screen: Role -->
 <div id="screen-role" class="screen active">
-  <div class="role-title">ברוכים הבאים! 👋</div>
-  <div class="role-subtitle">מי אתה היום?</div>
+  <div class="role-title">⭐ הכוכבים שלנו ⭐ </div>
+  <div class="role-subtitle">מי אתם היום?</div>
   <div class="role-cards">
     <div class="role-card" onclick="enterParent()">
-      <div class="role-icon">👨‍👩‍👧</div>
-      <div class="role-name" style="color:var(--accent2)">הורה</div>
+      <div class="role-icon">👩🏻🤍👱🏻‍♂️</div>
+      <div class="role-name" style="color:var(--accent2)">הורים</div>
       <div style="color:var(--muted);font-size:0.9rem;margin-top:8px;">נהל כוכבים ופעולות</div>
     </div>
     <div class="role-card" onclick="showChildSelect()">
-      <div class="role-icon">🧒</div>
-      <div class="role-name" style="color:var(--accent3)">ילד/ה</div>
+      <div class="role-icon">👦🏻👦🏼</div>
+      <div class="role-name" style="color:var(--accent3)">ילדים</div>
       <div style="color:var(--muted);font-size:0.9rem;margin-top:8px;">ראה את הכוכבים שלי</div>
     </div>
   </div>
@@ -251,7 +250,7 @@
 
 <!-- Screen: Child Select -->
 <div id="screen-child-select" class="screen">
-  <div style="font-family:'Fredoka One',cursive;font-size:2rem;">מי אתה? 🌟</div>
+  <div style="font-family:Arial,sans-serif;font-size:2rem;">מי אתה? 🌟</div>
   <div id="child-select-list" style="display:flex;flex-wrap:wrap;gap:16px;justify-content:center;"></div>
 </div>
 
@@ -261,7 +260,7 @@
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
       <div id="child-view-avatar" style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;background:rgba(167,139,250,0.2);"></div>
       <div>
-        <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;" id="child-view-name"></div>
+        <div style="font-family:Arial,sans-serif;font-size:1.6rem;" id="child-view-name"></div>
         <div style="color:var(--muted);font-size:0.9rem;">הכוכבים שלי</div>
       </div>
     </div>
@@ -347,7 +346,7 @@
         <div class="section-title">🔑 סיסמת הורה</div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <input type="text" id="input-parent-password" placeholder="סיסמה חדשה" maxlength="20"
-            style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:Rubik,sans-serif;font-size:1rem;outline:none;width:180px;">
+            style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:Arial,sans-serif;font-size:1rem;outline:none;width:180px;">
           <button class="btn btn-sm" onclick="doChangeParentPassword()">💾 שמור סיסמה</button>
         </div>
       </div>
@@ -587,7 +586,7 @@ async function showChildSelect() {
   document.getElementById('child-select-list').innerHTML = children.map(c => `
     <div class="role-card" onclick="promptPassword('${c.id}')" style="min-width:140px;padding:28px 36px;">
       <div style="font-size:3rem;margin-bottom:12px;">${c.emoji}</div>
-      <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--accent3)">${c.name}</div>
+      <div style="font-family:Arial,sans-serif;font-size:1.3rem;color:var(--accent3)">${c.name}</div>
     </div>
   `).join('');
   document.getElementById('current-mode').textContent = '🧒 ילד/ה';
@@ -821,7 +820,7 @@ function renderManage() {
         <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px;">סיסמה נוכחית: <strong style="color:var(--accent4);">${c.password||'לא הוגדרה'}</strong></div>
         <div style="display:flex;gap:8px;justify-content:center;">
           <input type="text" id="pwd-${c.id}" placeholder="סיסמה חדשה" maxlength="10"
-            style="width:110px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:Rubik,sans-serif;font-size:0.85rem;outline:none;text-align:center;">
+            style="width:110px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:Arial,sans-serif;font-size:0.85rem;outline:none;text-align:center;">
           <button onclick="doSetPassword('${c.id}')" class="btn btn-sm" style="padding:6px 12px;font-size:0.8rem;">שמור</button>
         </div>
       </div>
