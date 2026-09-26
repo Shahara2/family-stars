@@ -602,14 +602,7 @@ function promptPassword(id) {
   if(!c) return;
   // Store current stars so we can detect new ones on entry
   if(getLastStars(id) === undefined) saveLastStars(id, parseInt(c.stars)||0);
-  if(!c.password) { enterChild(id); return; }
-  pendingChildId = id;
-  document.getElementById('pwd-child-emoji').textContent = c.emoji;
-  document.getElementById('pwd-child-name').textContent = c.name;
-  document.getElementById('input-password').value = '';
-  document.getElementById('pwd-error').textContent = '';
-  openModal('modal-password');
-  setTimeout(()=>document.getElementById('input-password').focus(), 200);
+  enterChild(id);
 }
 
 function checkPassword() {
@@ -665,7 +658,6 @@ function enterChild(id) {
             <div style="flex:1;min-width:0;">
               <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.action_name}</div>
               <div style="color:${plus?'var(--accent1)':'var(--danger)'};font-weight:700;font-size:0.8rem;">${plus?'+':''}${h.stars} ⭐</div>
-              <div style="color:var(--muted);font-size:0.75rem;">${h.timestamp}</div>
             </div>
           </div>`;
       }).join('') + '</div>';
