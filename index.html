@@ -784,28 +784,30 @@ function renderOverview() {
   const children = appData.users.filter(u=>u.role==='child');
   document.getElementById('children-overview').innerHTML = children.map(c=>{
     const childHist = (appData.history||[]).filter(h=>String(h.child_id)===String(c.id));
-    const starsGiven = childHist.filter(h=>parseInt(h.stars)>0 && h.type!=='הפחתה');
-    const rewardsRedeemed = childHist.filter(h=>h.type==='פרס');
+    // כוכבים שניתנו + פרסים שמומשו, מעורבבים לפי סדר הזמן (מהחדש לישן)
+    const items = childHist.filter(h => h.type==='פרס' || (parseInt(h.stars)>0 && h.type!=='הפחתה'));
+    const recent = items.slice(-10).reverse();
     return `
       <div class="child-overview-card" onclick="selectChildAndGo('${c.id}')" style="cursor:pointer;">
         <div class="child-big-avatar">${c.emoji}</div>
         <div class="child-name">${c.name}</div>
         <div class="child-star-count">${c.stars||0} ⭐</div>
         <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;text-align:right;">
-          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">פעולות אחרונות:</div>
-          ${starsGiven.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
-            starsGiven.slice(-10).reverse().map(h=>`
-              <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-                <span style="color:var(--text);">${h.action_name}</span>
-                <span style="color:var(--accent1);font-weight:700;">+${h.stars}⭐</span>
-              </div>`).join('')}
-          ${rewardsRedeemed.length>0 ? `
-            <div style="font-size:0.8rem;color:var(--muted);margin-top:8px;margin-bottom:4px;">פרסים שמומשו:</div>
-            ${rewardsRedeemed.slice(-5).reverse().map(h=>`
-              <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;">
-                <span style="color:var(--accent2);">🎁 ${h.action_name}</span>
-                <span style="color:var(--danger);">${h.stars}⭐</span>
-              </div>`).join('')}` : ''}
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">היסטוריה אחרונה:</div>
+          ${recent.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
+            recent.map(h=>{
+              const isReward = h.type==='פרס';
+              const num = Math.abs(parseInt(h.stars)||0);
+              const day = friendlyDay(h.timestamp);
+              return `
+              <div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
+                  <span style="color:${isReward?'var(--accent2)':'var(--text)'};">${isReward?'🎁 ':''}${h.action_name}</span>
+                  <span style="color:${isReward?'var(--danger)':'var(--accent1)'};font-weight:700;">${isReward?'-':'+'}${num}⭐</span>
+                </div>
+                ${day ? `<div style="font-size:0.7rem;color:var(--muted);">${day}</div>` : ''}
+              </div>`;
+            }).join('')}
         </div>
       </div>`;
   }).join('');
