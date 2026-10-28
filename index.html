@@ -497,11 +497,24 @@ async function loadData() {
 
 // ── Date helpers (history) ────────────────
 function parseTs(ts) {
-  if(!ts) return null;
+  if(ts === undefined || ts === null || ts === '') return null;
+  if(ts instanceof Date) return isNaN(ts.getTime()) ? null : ts;
+  if(typeof ts === 'number') {
+    const d = new Date(ts > 1e12 ? ts : ts*1000);
+    return isNaN(d.getTime()) ? null : d;
+  }
   const s = String(ts).trim();
-  // dd/mm/yyyy or dd.mm.yyyy
-  const m = s.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})/);
-  if(m) return new Date(+m[3], +m[2]-1, +m[1]);
+  if(/^\d{4}-\d{1,2}-\d{1,2}T/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  let m = s.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = s.match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
+  if(m) {
+    let y = +m[3]; if(y < 100) y += 2000;
+    return new Date(y, +m[2]-1, +m[1]);
+  }
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
@@ -536,7 +549,6 @@ function goHome() {
 async function enterParent() {
   const entered = prompt('🔑 סיסמת הורים:');
   if(entered === null) return;
-  // טען נתונים ובדוק סיסמה מהשרת
   showLoading(true);
   try {
     const d = await api({ action:'getAll' });
@@ -633,7 +645,6 @@ let pendingChildId = null;
 function promptPassword(id) {
   const c = appData.users.find(u => String(u.id) === String(id));
   if(!c) return;
-  // Store current stars so we can detect new ones on entry
   if(getLastStars(id) === undefined) saveLastStars(id, parseInt(c.stars)||0);
   enterChild(id);
 }
@@ -773,20 +784,32 @@ function renderByTier(items, renderCard, emptyMsg, horizontal=false) {
   }).join('');
 }
 
-// ── Child View ────────────────────────────
+// ── Parent View ───────────────────────────
 function renderParent() {
   renderOverview();
   renderGive();
   renderManage();
 }
 
+// מזהה אם רשומת היסטוריה היא פרס או כוכבים (אותו זיהוי כמו במסך הילדים)
+function histInfo(h) {
+  const n = parseInt(h.stars) || 0;
+  const t = String(h.type || '').trim();
+  const isReward = t === 'פרס' || (n < 0 && t !== 'איפוס' && t !== 'הפחתה');
+  const isStars = !isReward && n > 0 && t !== 'הפחתה' && t !== 'איפוס';
+  return {
+    isReward, isStars,
+    name: h.action_name || h.reason || h.name || (isReward ? 'פרס' : 'כוכבים'),
+    num: Math.abs(n),
+    day: friendlyDay(h.timestamp || h.date || h.time)
+  };
+}
+
 function renderOverview() {
   const children = appData.users.filter(u=>u.role==='child');
   document.getElementById('children-overview').innerHTML = children.map(c=>{
     const childHist = (appData.history||[]).filter(h=>String(h.child_id)===String(c.id));
-    // כוכבים שניתנו + פרסים שמומשו, מעורבבים לפי סדר הזמן (מהחדש לישן)
-    const items = childHist.filter(h => h.type==='פרס' || (parseInt(h.stars)>0 && h.type!=='הפחתה'));
-    const recent = items.slice(-10).reverse();
+    const recent = childHist.map(histInfo).filter(x=>x.isReward || x.isStars).slice(-10).reverse();
     return `
       <div class="child-overview-card" onclick="selectChildAndGo('${c.id}')" style="cursor:pointer;">
         <div class="child-big-avatar">${c.emoji}</div>
@@ -795,19 +818,14 @@ function renderOverview() {
         <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;text-align:right;">
           <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">היסטוריה אחרונה:</div>
           ${recent.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
-            recent.map(h=>{
-              const isReward = h.type==='פרס';
-              const num = Math.abs(parseInt(h.stars)||0);
-              const day = friendlyDay(h.timestamp);
-              return `
+            recent.map(x=>`
               <div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
                 <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
-                  <span style="color:${isReward?'var(--accent2)':'var(--text)'};">${isReward?'🎁 ':''}${h.action_name}</span>
-                  <span style="color:${isReward?'var(--danger)':'var(--accent1)'};font-weight:700;">${isReward?'-':'+'}${num}⭐</span>
+                  <span style="color:${x.isReward?'var(--accent2)':'var(--text)'};">${x.isReward?'🎁 ':''}${x.name}</span>
+                  <span style="color:${x.isReward?'var(--danger)':'var(--accent1)'};font-weight:700;">${x.isReward?'-':'+'}${x.num}⭐</span>
                 </div>
-                ${day ? `<div style="font-size:0.7rem;color:var(--muted);">${day}</div>` : ''}
-              </div>`;
-            }).join('')}
+                ${x.day ? `<div style="font-size:0.7rem;color:var(--muted);">${x.day}</div>` : ''}
+              </div>`).join('')}
         </div>
       </div>`;
   }).join('');
@@ -1034,10 +1052,8 @@ function openAddChild() {
 // ── Visual helper: emoji or image ─────────
 function fixImageUrl(url) {
   if(!url) return '';
-  // Convert Drive share URL to thumbnail
   const shareMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
   if(shareMatch) return `https://drive.google.com/thumbnail?id=${shareMatch[1]}&sz=w300`;
-  // Convert Drive open URL
   const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
   if(openMatch) return `https://drive.google.com/thumbnail?id=${openMatch[1]}&sz=w300`;
   return url;
@@ -1102,7 +1118,6 @@ async function saveAction() {
   const stars = parseInt(document.getElementById('input-action-stars').value)||3;
   const imageField = document.getElementById('input-action-image');
   const image = imageField ? imageField.value.trim() : '';
-  console.log('image field:', imageField, 'value:', image);
   if(!name) { alert('הכנס שם פעולה'); return; }
   showLoading(true);
   try {
@@ -1112,23 +1127,6 @@ async function saveAction() {
     showToast(`${image?'🖼️':selectedActionEmoji} "${name}" נוספה!`);
   } catch(e) { showToast('שגיאה: '+e.message); }
   showLoading(false);
-}
-
-function renderManageRewards() {
-  const rewards = (appData.rewards||[]).slice().sort((a,b)=>a.stars-b.stars);
-  const el = document.getElementById('manage-rewards-list');
-  if(!rewards.length) {
-    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;">עוד לא הוגדרו פרסים</div>';
-    return;
-  }
-  el.innerHTML = `<div class="actions-grid">${rewards.map(r=>`
-    <div class="action-card">
-      <div style="margin-bottom:8px;">${renderVisual(r)}</div>
-      <div class="action-name">${r.name}</div>
-      <div class="action-stars-badge">${r.stars} ⭐</div>
-      <button onclick="doDeleteReward('${r.id}')" class="btn btn-danger btn-sm" style="margin-top:12px;">מחק</button>
-    </div>
-  `).join('')}</div>`;
 }
 
 function openAddReward() {
