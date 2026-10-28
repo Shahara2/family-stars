@@ -793,10 +793,12 @@ function renderParent() {
 
 // מזהה אם רשומת היסטוריה היא פרס או כוכבים (אותו זיהוי כמו במסך הילדים)
 function histInfo(h) {
+function histInfo(h) {
   const n = parseInt(h.stars) || 0;
   const t = String(h.type || '').trim();
-  const isReward = t === 'פרס' || (n < 0 && t !== 'איפוס' && t !== 'הפחתה');
-  const isStars = !isReward && n > 0 && t !== 'הפחתה' && t !== 'איפוס';
+  const isReset = t === 'איפוס';
+  const isReward = !isReset && (t === 'פרס' || t === 'הפחתה' || n < 0);
+  const isStars = !isReward && !isReset && n > 0;
   return {
     isReward, isStars,
     name: h.action_name || h.reason || h.name || (isReward ? 'פרס' : 'כוכבים'),
