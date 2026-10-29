@@ -791,25 +791,12 @@ function renderParent() {
   renderManage();
 }
 
-// מזהה אם רשומת היסטוריה היא פרס או כוכבים (אותו זיהוי כמו במסך הילדים)
-function histInfo(h) {
-  const n = parseInt(h.stars) || 0;
-  const t = String(h.type || '').trim();
-  const isReward = t === 'פרס' || (n < 0 && t !== 'איפוס' && t !== 'הפחתה');
-  const isStars = !isReward && n > 0 && t !== 'הפחתה' && t !== 'איפוס';
-  return {
-    isReward, isStars,
-    name: h.action_name || h.reason || h.name || (isReward ? 'פרס' : 'כוכבים'),
-    num: Math.abs(n),
-    day: friendlyDay(h.timestamp || h.date || h.time)
-  };
-}
-
+// סקירה להורים: אותה היסטוריה כמו במסך הילדים (כוכבים + פרסים, מהחדש לישן)
 function renderOverview() {
   const children = appData.users.filter(u=>u.role==='child');
   document.getElementById('children-overview').innerHTML = children.map(c=>{
     const childHist = (appData.history||[]).filter(h=>String(h.child_id)===String(c.id));
-    const recent = childHist.map(histInfo).filter(x=>x.isReward || x.isStars).slice(-10).reverse();
+    const recent = [...childHist].reverse().slice(0,10);
     return `
       <div class="child-overview-card" onclick="selectChildAndGo('${c.id}')" style="cursor:pointer;">
         <div class="child-big-avatar">${c.emoji}</div>
@@ -818,14 +805,22 @@ function renderOverview() {
         <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;text-align:right;">
           <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">היסטוריה אחרונה:</div>
           ${recent.length===0 ? `<div style="color:var(--muted);font-size:0.8rem;">אין עדיין</div>` :
-            recent.map(x=>`
+            recent.map(h=>{
+              const n = parseInt(h.stars) || 0;
+              const isReward = h.type === 'פרס';
+              const negative = isReward || n < 0;
+              const icon = isReward ? '🎁 ' : (negative ? '🔻 ' : '');
+              const amount = negative ? `-${Math.abs(n)}` : `+${n}`;
+              const day = friendlyDay(h.timestamp);
+              return `
               <div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
                 <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
-                  <span style="color:${x.isReward?'var(--accent2)':'var(--text)'};">${x.isReward?'🎁 ':''}${x.name}</span>
-                  <span style="color:${x.isReward?'var(--danger)':'var(--accent1)'};font-weight:700;">${x.isReward?'-':'+'}${x.num}⭐</span>
+                  <span style="color:${negative?'var(--accent2)':'var(--text)'};">${icon}${h.action_name}</span>
+                  <span style="color:${negative?'var(--danger)':'var(--accent1)'};font-weight:700;">${amount}⭐</span>
                 </div>
-                ${x.day ? `<div style="font-size:0.7rem;color:var(--muted);">${x.day}</div>` : ''}
-              </div>`).join('')}
+                ${day ? `<div style="font-size:0.7rem;color:var(--muted);">${day}</div>` : ''}
+              </div>`;
+            }).join('')}
         </div>
       </div>`;
   }).join('');
